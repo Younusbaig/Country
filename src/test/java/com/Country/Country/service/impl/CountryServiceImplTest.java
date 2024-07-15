@@ -1,99 +1,86 @@
 package com.Country.Country.service.impl;
 
 import com.Country.Country.dto.CountryDto;
+import com.Country.Country.dto.NameDto;
 import com.Country.Country.exception.ServiceException;
-import com.Country.Country.mapper.CountryMapper;
-import com.Country.Country.model.Country;
-import com.Country.Country.repository.CountryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-class CountryServiceImplTest {
+public class CountryServiceImplTest {
+
+    private static final String REST_COUNTRIES_API_URL = "https://restcountries.com/v3.1/name/{name}";
+
+    @Mock
+    private RestTemplate restTemplate;
 
     @InjectMocks
-   private CountryServiceImpl countryService;
-   @Mock
-   private CountryRepository countryRepository;
-   @Mock
-   private CountryMapper countryMapper;
+    private CountryServiceImpl countryService;
 
-   @BeforeEach
-   void setUp(){
-       MockitoAnnotations.openMocks(this);
-   }
-
-   @Test
-    void  createCountry_WhenCountryNameDoesNotExist(){
-        CountryDto countryDto = new CountryDto();
-        countryDto.setName("PK");
-
-        Country country = new Country();
-        country.setName("PK");
-
-        when(countryRepository.existsByName(anyString())).thenReturn(false);
-        when(countryMapper.countryDtoToCountry(any(CountryDto.class))).thenReturn(country);
-
-        countryService.createCountry(countryDto);
-
-        verify(countryRepository, times(1)).existsByName(anyString());
-        verify(countryMapper, times(1)).countryDtoToCountry(any());
-
+    @BeforeEach
+    void setUp(){
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void throwException_whenCountryNameExist(){
-       CountryDto countryDto = new CountryDto();
-       countryDto.setName("USA");
+    public void testGetByCountryName_Success() {
 
 
-       when(countryRepository.existsByName(anyString())).thenReturn(true);
-        ServiceException exception = assertThrows(ServiceException.class, ()-> {countryService.createCountry(countryDto);});
+        String countryName = "Canada";
 
-        assertEquals("Country name already exists", exception.getMessage());
-        verify(countryRepository, times(1)).existsByName(any());
+        // Create a mock CountryDto with NameDto
+        CountryDto expectedCountryDto = new CountryDto();
+        NameDto nameDto = new NameDto();
+        nameDto.setCommon("Canada");
+        expectedCountryDto.setName(nameDto);
+
+        // Construct the expected URL
+        String expectedUrl = UriComponentsBuilder.fromHttpUrl(REST_COUNTRIES_API_URL)
+                .buildAndExpand(countryName)
+                .toUriString();
+
+        // Mock the restTemplate behavior
+        when(restTemplate.getForObject(expectedUrl, CountryDto[].class))
+                .thenReturn(new CountryDto[]{expectedCountryDto});
+
+        // Call the service
+        CountryDto actualCountryDto = countryService.getByCountryName(countryName);
+
+        // Verify the output
+        assertEquals(expectedCountryDto.getName().getCommon(), actualCountryDto.getName().getCommon());
+
+        // Verify that restTemplate getForObject Method
+        verify(restTemplate, times(1)).getForObject(expectedUrl, CountryDto[].class);
     }
 
     @Test
-    void throwExceptionWhenCountryNameNotFound(){
-       Country country = new Country();
-       country.setName("Ireland");
+    public void testGetByCountryName_NotFound() {
+        // Mock the expected response from the external API
+        String countryName = "NonExistentCountry";
 
-       when(countryRepository.findByName(anyString())).thenReturn(Optional.empty());
-       ServiceException exception = assertThrows(ServiceException.class, ()-> countryService.getByCountryName("Name not Found"));
+        // Construct the expected URL
+        String expectedUrl = UriComponentsBuilder.fromHttpUrl(REST_COUNTRIES_API_URL)
+                .buildAndExpand(countryName)
+                .toUriString();
 
-       assertEquals("Country name not found", exception.getMessage());
-       verify(countryRepository, times(1)).findByName(anyString());
+        // Mock the result as null
+        when(restTemplate.getForObject(expectedUrl, CountryDto[].class))
+                .thenReturn(null);
 
+        // Call the service and expect Service Exception
+        assertThrows(ServiceException.class, () -> {
+            countryService.getByCountryName(countryName);
+        });
+
+        // Verify that restTemplate getForObject
+        verify(restTemplate, times(1)).getForObject(expectedUrl, CountryDto[].class);
     }
-
-    @Test
-    void getCountryDetailsWhenNameFound(){
-       Country country = new Country();
-       country.setName("USA");
-
-       CountryDto countryDto = new CountryDto();
-       countryDto.setName("USA");
-
-       when(countryRepository.findByName(anyString())).thenReturn(Optional.of(country));
-       when(countryMapper.countryTocountryDto(any())).thenReturn(countryDto);
-
-       CountryDto result = countryService.getByCountryName("USA");
-
-       assertNotNull(result);
-       assertEquals("USA", result.getName());
-       verify(countryRepository, times(1)).findByName(anyString());
-       verify(countryMapper, times(1)).countryTocountryDto(country);
-
-    }
-
 }
