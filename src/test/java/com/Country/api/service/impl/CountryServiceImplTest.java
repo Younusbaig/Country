@@ -1,8 +1,8 @@
-package com.Country.Country.service.impl;
+package com.Country.api.service.impl;
 
-import com.Country.Country.dto.CountryDto;
-import com.Country.Country.dto.NameDto;
-import com.Country.Country.exception.ServiceException;
+import com.Country.api.dto.CountryDto;
+import com.Country.api.dto.NameDto;
+import com.Country.api.exception.ServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

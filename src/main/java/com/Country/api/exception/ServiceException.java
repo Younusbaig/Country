@@ -1,4 +1,4 @@
-package com.Country.Country.exception;
+package com.Country.api.exception;
 
 public class ServiceException extends RuntimeException {
 

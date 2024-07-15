@@ -1,6 +1,6 @@
-package com.Country.Country.service;
+package com.Country.api.service;
 
-import com.Country.Country.dto.CountryDto;
+import com.Country.api.dto.CountryDto;
 
 public interface CountryService {
 

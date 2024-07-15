@@ -1,8 +1,8 @@
-package com.Country.Country.service.impl;
+package com.Country.api.service.impl;
 
-import com.Country.Country.dto.CountryDto;
-import com.Country.Country.exception.ServiceException;
-import com.Country.Country.service.CountryService;
+import com.Country.api.dto.CountryDto;
+import com.Country.api.exception.ServiceException;
+import com.Country.api.service.CountryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;

@@ -1,7 +1,7 @@
-package com.Country.Country.controller;
+package com.Country.api.controller;
 
-import com.Country.Country.dto.CountryDto;
-import com.Country.Country.service.CountryService;
+import com.Country.api.dto.CountryDto;
+import com.Country.api.service.CountryService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
