@@ -1,4 +1,4 @@
-package com.Country.api.dto;
+package com.country.dto;
 
 import lombok.Data;
 

@@ -1,86 +1,65 @@
 package com.Country.api.service.impl;
 
-import com.Country.api.dto.CountryDto;
-import com.Country.api.dto.NameDto;
-import com.Country.api.exception.ServiceException;
+import com.country.config.RestClient;
+import com.country.dto.CountryDto;
+import com.country.exception.ServiceException;
+import com.country.service.impl.CountryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class CountryServiceImplTest {
 
-    private static final String REST_COUNTRIES_API_URL = "https://restcountries.com/v3.1/name/{name}";
-
     @Mock
-    private RestTemplate restTemplate;
+    public RestClient restClient;
 
     @InjectMocks
-    private CountryServiceImpl countryService;
+    public CountryServiceImpl countryService;
+
+    private String restCountriesApiUrl = "https://restcountries.com/v3.1/name/{name}";
 
     @BeforeEach
     void setUp(){
         MockitoAnnotations.openMocks(this);
+        countryService = new CountryServiceImpl(restClient, restCountriesApiUrl);
     }
-
     @Test
     public void testGetByCountryName_Success() {
+    String countryName = "Germany";
+    String url = UriComponentsBuilder.fromHttpUrl(restCountriesApiUrl)
+            .buildAndExpand(countryName)
+            .toUriString();
 
+    CountryDto[] response = { new CountryDto() }; // Mock response
+    when(restClient.getForObject(url, CountryDto[].class)).thenReturn(response);
 
-        String countryName = "Canada";
+    CountryDto result = countryService.getByCountryName(countryName);
 
-        // Create a mock CountryDto with NameDto
-        CountryDto expectedCountryDto = new CountryDto();
-        NameDto nameDto = new NameDto();
-        nameDto.setCommon("Canada");
-        expectedCountryDto.setName(nameDto);
-
-        // Construct the expected URL
-        String expectedUrl = UriComponentsBuilder.fromHttpUrl(REST_COUNTRIES_API_URL)
-                .buildAndExpand(countryName)
-                .toUriString();
-
-        // Mock the restTemplate behavior
-        when(restTemplate.getForObject(expectedUrl, CountryDto[].class))
-                .thenReturn(new CountryDto[]{expectedCountryDto});
-
-        // Call the service
-        CountryDto actualCountryDto = countryService.getByCountryName(countryName);
-
-        // Verify the output
-        assertEquals(expectedCountryDto.getName().getCommon(), actualCountryDto.getName().getCommon());
-
-        // Verify that restTemplate getForObject Method
-        verify(restTemplate, times(1)).getForObject(expectedUrl, CountryDto[].class);
+    assertNotNull(result);
+    verify(restClient, times(1)).getForObject(url, CountryDto[].class);
     }
+
 
     @Test
     public void testGetByCountryName_NotFound() {
-        // Mock the expected response from the external API
         String countryName = "NonExistentCountry";
-
-        // Construct the expected URL
-        String expectedUrl = UriComponentsBuilder.fromHttpUrl(REST_COUNTRIES_API_URL)
+        String url = UriComponentsBuilder.fromHttpUrl(restCountriesApiUrl)
                 .buildAndExpand(countryName)
                 .toUriString();
 
-        // Mock the result as null
-        when(restTemplate.getForObject(expectedUrl, CountryDto[].class))
-                .thenReturn(null);
+        when(restClient.getForObject(url, CountryDto[].class)).thenReturn(new CountryDto[0]);
 
-        // Call the service and expect Service Exception
-        assertThrows(ServiceException.class, () -> {
+        ServiceException exception = assertThrows(ServiceException.class, () -> {
             countryService.getByCountryName(countryName);
         });
 
-        // Verify that restTemplate getForObject
-        verify(restTemplate, times(1)).getForObject(expectedUrl, CountryDto[].class);
+        assertEquals("Country name not found", exception.getMessage());
+        verify(restClient, times(1)).getForObject(url, CountryDto[].class);
     }
 }
