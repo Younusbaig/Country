@@ -1,8 +1,8 @@
 package com.country.service.impl;
+
 import com.country.dto.CountryDto;
 import com.country.exception.ServiceException;
 import com.country.service.CountryService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -11,17 +11,19 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class CountryServiceImpl implements CountryService {
 
     private final RestClient restClient;
-    private final String countriesApiUrL;
 
-    public CountryServiceImpl(RestClient restClient, @Value("${rest.countries.api.url}") String countriesApiUrL) {
+
+//    @Value("${rest.countries.api.url}")
+//    private String countriesApiUrl;
+
+   public CountryServiceImpl(RestClient restClient) {
         this.restClient = restClient;
-        this.countriesApiUrL = countriesApiUrL;
     }
 
     @Override
     public CountryDto getByCountryName(String name) {
 
-        String url = UriComponentsBuilder.fromHttpUrl(countriesApiUrL)
+        String url = UriComponentsBuilder.fromHttpUrl("https://restcountries.com/v3.1/name/{name}")
                 .buildAndExpand(name)
                 .toUriString();
         CountryDto[] countryDto = restClient.get()
@@ -36,6 +38,9 @@ public class CountryServiceImpl implements CountryService {
             throw new ServiceException("Country name not found");
         }
     }
+
+
+
 }
 
 

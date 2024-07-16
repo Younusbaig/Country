@@ -1,6 +1,7 @@
 package com.country.controller;
 
 import com.country.dto.CountryDto;
+import com.country.exception.ServiceException;
 import com.country.service.CountryService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,13 @@ public class CountryController {
     private CountryService countryService;
     @GetMapping("/{name}")
     ResponseEntity<CountryDto> getByName(@PathVariable String name){
-       CountryDto countryDto = countryService.getByCountryName(name);
-        return new ResponseEntity<>(countryDto, HttpStatus.OK);
+        try {
+            CountryDto countryDto = countryService.getByCountryName(name);
+            return new ResponseEntity<>(countryDto, HttpStatus.OK);
+        } catch (ServiceException e){
+            return ResponseEntity.notFound().build();
+        }
+
     }
 
 }
