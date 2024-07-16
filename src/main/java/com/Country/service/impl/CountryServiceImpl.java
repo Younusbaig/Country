@@ -12,11 +12,7 @@ public class CountryServiceImpl implements CountryService {
 
     private final RestClient restClient;
 
-
-//    @Value("${rest.countries.api.url}")
-//    private String countriesApiUrl;
-
-   public CountryServiceImpl(RestClient restClient) {
+    public CountryServiceImpl(RestClient restClient) {
         this.restClient = restClient;
     }
 
@@ -38,7 +34,6 @@ public class CountryServiceImpl implements CountryService {
             throw new ServiceException("Country name not found");
         }
     }
-
 
 
 }

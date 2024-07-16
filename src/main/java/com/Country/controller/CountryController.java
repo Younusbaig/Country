@@ -19,12 +19,13 @@ public class CountryController {
 
     @Autowired
     private CountryService countryService;
+
     @GetMapping("/{name}")
-    ResponseEntity<CountryDto> getByName(@PathVariable String name){
+    ResponseEntity<CountryDto> getByName(@PathVariable String name) {
         try {
             CountryDto countryDto = countryService.getByCountryName(name);
             return new ResponseEntity<>(countryDto, HttpStatus.OK);
-        } catch (ServiceException e){
+        } catch (ServiceException e) {
             return ResponseEntity.notFound().build();
         }
 

@@ -5,5 +5,7 @@ import com.country.dto.CountryDto;
 public interface CountryService {
 
 
-        CountryDto getByCountryName(String name);;
+    CountryDto getByCountryName(String name);
+
+    ;
 }
