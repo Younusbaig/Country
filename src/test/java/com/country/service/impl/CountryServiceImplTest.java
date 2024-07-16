@@ -1,9 +1,8 @@
-package com.Country.api.service.impl;
+package com.country.service.impl;
 
 import com.country.config.RestClient;
 import com.country.dto.CountryDto;
 import com.country.exception.ServiceException;
-import com.country.service.impl.CountryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
