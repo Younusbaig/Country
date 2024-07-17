@@ -4,12 +4,10 @@ import com.country.dto.CountryDto;
 import com.country.exception.ServiceException;
 import com.country.service.CountryService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
-@Component
 @Service
 public class CountryServiceImpl implements CountryService {
 
