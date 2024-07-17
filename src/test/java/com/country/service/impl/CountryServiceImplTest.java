@@ -6,69 +6,79 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import static com.jayway.jsonpath.internal.path.PathCompiler.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({SpringExtension.class})
+@SpringBootTest
 public class CountryServiceImplTest {
 
     @Mock
-    public RestClient restClient;
+    private RestClient restClient;
+
+    @Value("${rest.countries.api.url}")
+    private String countriesApiUrl;
 
     @InjectMocks
     public CountryServiceImpl countryService;
 
+    @Mock
+    private RestClient.RequestHeadersUriSpec uriSpecMock;
+
+    @Mock
+    private RestClient.RequestHeadersSpec headersSpecMock;
+
+    @Mock
+    private RestClient.ResponseSpec responseSpecMock;
+
+
     @Test
     public void testGetByCountryName_Success() {
-        String countryName = "Germany";
-        String url = UriComponentsBuilder.fromHttpUrl("https://restcountries.com/v3.1/name/{name}")
-                .buildAndExpand(countryName)
-                .toUriString();
-
-        CountryDto[] response = {new CountryDto()}; // Mock response
-
-        RestClient.RequestHeadersUriSpec uriSpecMock = mock(RestClient.RequestHeadersUriSpec.class);
-        RestClient.RequestHeadersSpec headersSpecMock = mock(RestClient.RequestHeadersSpec.class);
-        RestClient.ResponseSpec responseSpecMock = mock(RestClient.ResponseSpec.class);
 
 
+        String countryName = "USA";
+        String expectedUrl = "https://restcountries.com/v3.1/name/" + countryName;
+
+        // Mock response
+        CountryDto expectedCountryDto = new CountryDto();
+
+        // Use ReflectionTestUtils to set the @Value annotated field
+        ReflectionTestUtils.setField(countryService, "countriesApiUrl", expectedUrl);
+
+        // Stubbing the restClient interactions
         when(restClient.get()).thenReturn(uriSpecMock);
-        when(uriSpecMock.uri(url)).thenReturn(headersSpecMock);
+        when(uriSpecMock.uri(expectedUrl)).thenReturn(headersSpecMock);
         when(headersSpecMock.retrieve()).thenReturn(responseSpecMock);
-        when(responseSpecMock.body(CountryDto[].class)).thenReturn(response);
+        when(responseSpecMock.body(CountryDto[].class)).thenReturn(new CountryDto[]{expectedCountryDto});
 
-
-
+        // Call the method under test
         CountryDto result = countryService.getByCountryName(countryName);
 
+        // Assert the result and verify interactions
         assertNotNull(result);
         verify(restClient, times(1)).get();
-        verify(uriSpecMock, times(1)).uri(url);
-        verify(headersSpecMock, times(1)).retrieve();
-        verify(responseSpecMock, times(1)).body(CountryDto[].class);
-
+        verifyNoMoreInteractions(restClient);
     }
-
 
     @Test
     public void testGetByCountryName_CountryNotFound() {
         // Arrange
-        String countryName = "NonExistingCountry";
-        String url = "https://restcountries.com/v3.1/name/" + countryName;
+        String countryName = "NonExistentCountry";
+        String expectedUrl = "https://restcountries.com/v3.1/name/" + countryName;
+
+        ReflectionTestUtils.setField(countryService, "countriesApiUrl", expectedUrl);
 
         // Mock the RestClient chain to return null body
-        RestClient.RequestHeadersUriSpec uriSpecMock = mock(RestClient.RequestHeadersUriSpec.class);
-        RestClient.RequestHeadersSpec headersSpecMock = mock(RestClient.RequestHeadersSpec.class);
-        RestClient.ResponseSpec responseSpecMock = mock(RestClient.ResponseSpec.class);
-
         when(restClient.get()).thenReturn(uriSpecMock);
-        when(uriSpecMock.uri(url)).thenReturn(headersSpecMock);
+        when(uriSpecMock.uri(expectedUrl)).thenReturn(headersSpecMock);
         when(headersSpecMock.retrieve()).thenReturn(responseSpecMock);
         when(responseSpecMock.body(CountryDto[].class)).thenReturn(null);
 
@@ -83,7 +93,7 @@ public class CountryServiceImplTest {
 
         // Verify method calls
         verify(restClient, times(1)).get();
-        verify(uriSpecMock, times(1)).uri(url);
+        verify(uriSpecMock, times(1)).uri(expectedUrl);
         verify(headersSpecMock, times(1)).retrieve();
         verify(responseSpecMock, times(1)).body(CountryDto[].class);
     }
