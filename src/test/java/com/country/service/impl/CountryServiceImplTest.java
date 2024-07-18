@@ -8,17 +8,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClient;
 
-import static com.jayway.jsonpath.internal.path.PathCompiler.fail;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith({SpringExtension.class})
 @SpringBootTest
+@EnableCaching
 public class CountryServiceImplTest {
 
     @Mock
@@ -39,6 +41,9 @@ public class CountryServiceImplTest {
     @Mock
     private RestClient.ResponseSpec responseSpecMock;
 
+    @Mock
+    private CacheManager cacheManager;
+
 
     @Test
     public void testGetByCountryName_Success() {
@@ -58,6 +63,10 @@ public class CountryServiceImplTest {
         when(uriSpecMock.uri(expectedUrl)).thenReturn(headersSpecMock);
         when(headersSpecMock.retrieve()).thenReturn(responseSpecMock);
         when(responseSpecMock.body(CountryDto[].class)).thenReturn(new CountryDto[]{expectedCountryDto});
+
+        // Mock the cache behaviour
+        when(cacheManager.getCache("countries")).thenReturn(new ConcurrentMapCache("countries"));
+        assertNull(cacheManager.getCache("countries").get(countryName));
 
         // Call the method under test
         CountryDto result = countryService.getByCountryName(countryName);
@@ -83,13 +92,12 @@ public class CountryServiceImplTest {
         when(responseSpecMock.body(CountryDto[].class)).thenReturn(null);
 
         // Act and Assert
-        try {
+        ServiceException exception = assertThrows(ServiceException.class, () -> {
             countryService.getByCountryName(countryName);
-            // Fail if no exception is thrown
-            fail("Expected ServiceException was not thrown");
-        } catch (ServiceException e) {
-            assertEquals("Country name not found", e.getMessage());
-        }
+        });
+
+        // Verify the exception message
+        assertEquals("Country name not found", exception.getMessage());
 
         // Verify method calls
         verify(restClient, times(1)).get();

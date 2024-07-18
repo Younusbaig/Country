@@ -3,13 +3,19 @@ package com.country.service.impl;
 import com.country.dto.CountryDto;
 import com.country.exception.ServiceException;
 import com.country.service.CountryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+
 @Service
 public class CountryServiceImpl implements CountryService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CountryServiceImpl.class);
 
     private final RestClient restClient;
 
@@ -22,8 +28,9 @@ public class CountryServiceImpl implements CountryService {
     }
 
     @Override
+    @Cacheable(value = "countries", key = "#name")
     public CountryDto getByCountryName(String name) {
-
+        logger.info("Fetching data for country: {}", name);
         String url = UriComponentsBuilder.fromHttpUrl(countriesApiUrl)
                 .buildAndExpand(name)
                 .toUriString();
