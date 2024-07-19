@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriComponentsBuilder;
 
 
 @Service
@@ -31,11 +30,8 @@ public class CountryServiceImpl implements CountryService {
     @Cacheable(value = "countries", key = "#name")
     public CountryDto getByCountryName(String name) {
         logger.info("Fetching data for country: {}", name);
-        String url = UriComponentsBuilder.fromHttpUrl(countriesApiUrl)
-                .buildAndExpand(name)
-                .toUriString();
         CountryDto[] countryDto = restClient.get()
-                .uri(url)
+                .uri(countriesApiUrl , name)
                 .retrieve()
                 .body(CountryDto[].class);
 
@@ -43,7 +39,7 @@ public class CountryServiceImpl implements CountryService {
         if (countryDto != null && countryDto.length > 0) {
             return countryDto[0];
         } else {
-            throw new ServiceException("Country name not found");
+            throw new ServiceException("Country name not found" + name);
         }
     }
 

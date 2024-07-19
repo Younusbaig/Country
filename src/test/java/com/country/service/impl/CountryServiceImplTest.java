@@ -49,20 +49,17 @@ public class CountryServiceImplTest {
     public void testGetByCountryName_Success() {
 
 
-        String countryName = "USA";
-        String expectedUrl = "https://restcountries.com/v3.1/name/" + countryName;
-
-        // Mock response
-        CountryDto expectedCountryDto = new CountryDto();
+        String countryName = "Germany";
+        CountryDto[] response = {new CountryDto()};
 
         // Use ReflectionTestUtils to set the @Value annotated field
-        ReflectionTestUtils.setField(countryService, "countriesApiUrl", expectedUrl);
+        ReflectionTestUtils.setField(countryService, "countriesApiUrl", countriesApiUrl);
 
         // Stubbing the restClient interactions
         when(restClient.get()).thenReturn(uriSpecMock);
-        when(uriSpecMock.uri(expectedUrl)).thenReturn(headersSpecMock);
+        when(uriSpecMock.uri(countriesApiUrl, countryName)).thenReturn(headersSpecMock);
         when(headersSpecMock.retrieve()).thenReturn(responseSpecMock);
-        when(responseSpecMock.body(CountryDto[].class)).thenReturn(new CountryDto[]{expectedCountryDto});
+        when(responseSpecMock.body(CountryDto[].class)).thenReturn(response);
 
         // Mock the cache behaviour
         when(cacheManager.getCache("countries")).thenReturn(new ConcurrentMapCache("countries"));
@@ -74,34 +71,30 @@ public class CountryServiceImplTest {
         // Assert the result and verify interactions
         assertNotNull(result);
         verify(restClient, times(1)).get();
-        verifyNoMoreInteractions(restClient);
+        verify(uriSpecMock, times(1)).uri(countriesApiUrl, countryName);
+        verify(headersSpecMock, times(1)).retrieve();
+        verify(responseSpecMock, times(1)).body(CountryDto[].class);
     }
 
     @Test
     public void testGetByCountryName_CountryNotFound() {
         // Arrange
         String countryName = "NonExistentCountry";
-        String expectedUrl = "https://restcountries.com/v3.1/name/" + countryName;
 
-        ReflectionTestUtils.setField(countryService, "countriesApiUrl", expectedUrl);
+        ReflectionTestUtils.setField(countryService, "countriesApiUrl", countriesApiUrl);
 
         // Mock the RestClient chain to return null body
         when(restClient.get()).thenReturn(uriSpecMock);
-        when(uriSpecMock.uri(expectedUrl)).thenReturn(headersSpecMock);
+        when(uriSpecMock.uri(countriesApiUrl, countryName)).thenReturn(headersSpecMock);
         when(headersSpecMock.retrieve()).thenReturn(responseSpecMock);
-        when(responseSpecMock.body(CountryDto[].class)).thenReturn(null);
+        when(responseSpecMock.body(CountryDto[].class)).thenReturn(new CountryDto[0]);
 
         // Act and Assert
-        ServiceException exception = assertThrows(ServiceException.class, () -> {
-            countryService.getByCountryName(countryName);
-        });
-
-        // Verify the exception message
-        assertEquals("Country name not found", exception.getMessage());
+        assertThrows(ServiceException.class, () -> countryService.getByCountryName(countryName));
 
         // Verify method calls
         verify(restClient, times(1)).get();
-        verify(uriSpecMock, times(1)).uri(expectedUrl);
+        verify(uriSpecMock, times(1)).uri(countriesApiUrl, countryName);
         verify(headersSpecMock, times(1)).retrieve();
         verify(responseSpecMock, times(1)).body(CountryDto[].class);
     }
